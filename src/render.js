@@ -1,5 +1,11 @@
+
+//TODO: Component elements CAN have native event listeners -- check if 
+
 export function render(parentDom, newVNode) {
-    console.log(newVNode,parentDom, ' newVNode render.js 2');
+    if(newVNode === null && newVNode === false){
+        return;
+    }
+    // console.log(newVNode,parentDom, ' newVNode render.js 2');
     const newNodeTag = newVNode.tag;
     let createdDomNode;
 
@@ -8,30 +14,39 @@ export function render(parentDom, newVNode) {
     // }
 
     if(typeof newNodeTag ==='function' && 'prototype' in newNodeTag && newNodeTag.prototype.isClassComponent) {
-        console.log('CLASS COMPONENT TO RENDER', newVNode);
-        newVNode._componentInstance = new newNodeTag();
-        const renderData = newVNode._componentInstance.render();
+        // console.log('CLASS COMPONENT TO RENDER', newVNode);
+        newVNode.__componentInstance = new newNodeTag();
+        const renderData = newVNode.__componentInstance.render();
+        renderData.__componentInstance = newVNode.__componentInstance;
+        newVNode.__componentInstance.__currentVNode = renderData;
+        newVNode.__componentInstance.__parentDom = parentDom;
         createdDomNode = document.createElement(renderData.tag);
-        console.log('renderData', renderData)
+        // console.log('renderData', renderData)
         // need to add event listeners and props from the rendered data
         if(Object.keys(renderData.data.listeners).length !== 0) {
             // console.log(' add listeners to dom node', createdDomNode, newVNode.data.listeners);
             addListenersToDomNode(createdDomNode, renderData.data.listeners);
         }
+        // add component name to DOM element so we can compare in diffing.
+        createdDomNode.__component = newNodeTag;
         
         // Component will mount hook here
+        newVNode.__componentInstance.willMount();
+        // ====================================
         parentDom.appendChild(createdDomNode);
         // Component mounted hook here
-
         newVNode.__dom = createdDomNode;
+        newVNode.__componentInstance.__dom = createdDomNode;
+        newVNode.__componentInstance.mounted();
+
 
         // add event listeners to dom node
         if(Object.keys(newVNode.data.listeners).length !== 0) {
             for(let event in newVNode.data.listeners) {
-                newVNode._componentInstance.__listeners[event] = newVNode.data.listeners[event];
-                console.log(' =============================', newVNode._componentInstance.__listeners);
+                newVNode.__componentInstance.__listeners[event] = newVNode.data.listeners[event];
+                console.log(' =============================', newVNode.__componentInstance.__listeners);
             }
-            console.log(' add listeners to dom node', createdDomNode, newVNode.data.listeners);
+            console.log(' add listeners to dom node ------ if newVNode.data.listeners has a event with .native, add it here', createdDomNode, newVNode.data.listeners);
         }
 
         //setting propery to newly rendered domNode
@@ -51,6 +66,7 @@ export function render(parentDom, newVNode) {
         console.log(' newVNode is not a class but a string', newVNode);
         createdDomNode = document.createElement(newVNode.tag);
         parentDom.appendChild(createdDomNode);
+        newVNode.__dom = createdDomNode;
         
         //setting propery to newly rendered domNode
         for(let prop in newVNode.data) {
@@ -76,12 +92,15 @@ export function render(parentDom, newVNode) {
         }
 
     }
+    if(typeof newVNode.key !== undefined) {
+        createdDomNode.__mevactKey = newVNode.key;
+    }
 
     return createdDomNode;
 }
 
 export function unmount(vNodeToUnmount) {
-    return null;
+    vNodeToUnmount.__dom.remove();
 }
 
 export function setProperty(dom, key, value, oldValue) {

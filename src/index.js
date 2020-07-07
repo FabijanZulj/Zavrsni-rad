@@ -1,5 +1,4 @@
 import Component from './component.js';
-import {Fragment} from './component.js';
 import createElement from './create-element.js';
 import {render} from './render.js';
 
