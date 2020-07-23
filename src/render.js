@@ -102,6 +102,7 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
     if(newVNode.__elementKey) {
         createdDomNode.__elementKey = newVNode.__elementKey;
     }
+    createdDomNode.__dom = createdDomNode;
 
     return createdDomNode;
 }

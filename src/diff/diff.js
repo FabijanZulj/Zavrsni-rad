@@ -23,20 +23,24 @@ export function diff(oldVNode, newVNode, parentDom) {
             unmount(oldVNode);
         }
         
-        if(typeof oldVNode.tag === 'function') {
-            diffChildren(oldVNode, newVNode, componentInstance.__currentVNode.__dom);
+        // if(typeof oldVNode.tag === 'function') {
+        //     console.log('DIFFING CHILDREN IN DIFF', oldVNode);
+        //     diffChildren(oldVNode, newVNode, componentInstance.__currentVNode.__dom);
             
-            // oldVNode.__componentInstance.children = newVNode.children;
-            // oldVN
-            // oldVNode.__componentInstance.tag = newVNode.tag;
-            // oldVNode.__componentInstance.data = newVNode.data;
-            // oldVNode.__componentInstance.__currentVNode.children = newVNode.children;
-            // oldVNode.__componentInstance.__currentVNode.data = newVNode.data;
-            // oldVNode.__componentInstance.__currentVNode.tag = newVNode.tag;
+        //     // oldVNode.__componentInstance.children = newVNode.children;
+        //     // oldVN
+        //     // oldVNode.__componentInstance.tag = newVNode.tag;
+        //     // oldVNode.__componentInstance.data = newVNode.data;
+        //     // oldVNode.__componentInstance.__currentVNode.children = newVNode.children;
+        //     // oldVNode.__componentInstance.__currentVNode.data = newVNode.data;
+        //     // oldVNode.__componentInstance.__currentVNode.tag = newVNode.tag;
 
-        } else {
-            diffChildren(oldVNode, newVNode, oldVNode.__dom);
-        }
+        // } else {
+        //     console.log('DIFFING CHILDREN IN DIFF', oldVNode);
+        //     diffChildren(oldVNode, newVNode, oldVNode.__dom);
+        // }
+        console.log('diffing children', oldVNode);
+        diffChildren(oldVNode,newVNode, oldVNode.__dom);
     }
 
     if (componentInstance !== undefined) {
@@ -88,7 +92,7 @@ export function diff(oldVNode, newVNode, parentDom) {
 }
 
 export function diffChildren(oldVNode, newVNode, parentDom) {
-    console.log('diffing children', oldVNode, newVNode, parentDom);
+    // console.log('diffing children', oldVNode, newVNode, parentDom);
     const currentActiveElement = document.activeElement;
     const childrenPool = {};
     if(oldVNode.children.length > 0) {
@@ -126,13 +130,15 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
                 }
             } else {
                 if(childrenPool.hasOwnProperty(__index)) {
-                    if(typeof childrenPool[__index] === 'string' && typeof newChild === 'string') {
+                    if(typeof childrenPool[__index] !== 'object' && typeof newChild !== 'object') {
                         if(childrenPool[__index] !== newChild) {
                             // this means the strings are not the same, so we have to update the DOM
                             // we do this by acessing the child at __index so we
-                            const elementToRemove = parentDom.children[__index];
+                            console.log('788888888888888888888888888888888', parentDom.childNodes, __index);
+                            parentDom.childNodes[__index].nodeValue = newChild;
+                            // const elementToRemove = parentDom.children[__index];
                             // console.log('777777777777777777777777777777777777777777777777777777/', elementToRemove, childrenPool[__index], newChild);
-                            elementToRemove.remove();
+                            // elementToRemove.remove();
                         }
                         delete childrenPool[__index];
                     } else {
