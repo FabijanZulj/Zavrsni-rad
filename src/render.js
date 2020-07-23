@@ -1,8 +1,9 @@
 
 //TODO: Component elements CAN have native event listeners -- check if 
 
-export function render(parentDom, newVNode) {
-    if(newVNode === null && newVNode === false){
+export function render(parentDom, newVNode, shouldRenderChildren = true) {
+    console.log('RENDER CALLED, WITH ', parentDom, newVNode);
+    if(newVNode === null || newVNode === false){
         return;
     }
     // console.log(newVNode,parentDom, ' newVNode render.js 2');
@@ -14,12 +15,14 @@ export function render(parentDom, newVNode) {
     // }
 
     if(typeof newNodeTag ==='function' && 'prototype' in newNodeTag && newNodeTag.prototype.isClassComponent) {
-        // console.log('CLASS COMPONENT TO RENDER', newVNode);
-        newVNode.__componentInstance = new newNodeTag();
+        console.log('CLASS COMPONENT TO RENDER', newVNode);
+        newVNode.__componentInstance = new newNodeTag(newVNode.data);
         const renderData = newVNode.__componentInstance.render();
         renderData.__componentInstance = newVNode.__componentInstance;
+
         newVNode.__componentInstance.__currentVNode = renderData;
         newVNode.__componentInstance.__parentDom = parentDom;
+        
         createdDomNode = document.createElement(renderData.tag);
         // console.log('renderData', renderData)
         // need to add event listeners and props from the rendered data
@@ -56,7 +59,7 @@ export function render(parentDom, newVNode) {
         }
 
         newVNode.__dom = createdDomNode;
-        if(renderData.children.length) {
+        if(renderData.children.length && shouldRenderChildren === true) {
             for(let child in renderData.children) {
                 render(createdDomNode, renderData.children[child]);
             }
@@ -78,29 +81,41 @@ export function render(parentDom, newVNode) {
             addListenersToDomNode(createdDomNode, newVNode.data.listeners);
         }
 
-        if(newVNode.children.length) {
+        if(newVNode.children.length && shouldRenderChildren === true) {
             for(let child in newVNode.children) {
                 render(createdDomNode, newVNode.children[child]);
             }
         }
     } else if(typeof newVNode === 'string'){
         createdDomNode = document.createTextNode(newVNode);
+        console.log(' ============ append child for string >>>>>>>>>>>>>>>>>>>>', parentDom);
         parentDom.appendChild(createdDomNode);
         //setting propery to newly rendered domNode
         for(let prop in newVNode.data) {
             setProperty(createdDomNode,prop,newVNode.data[prop]);
         }
 
+    } else {
+        // other primitive type, to string it and render it.
+        return render(parentDom,newVNode.toString());
     }
-    if(typeof newVNode.key !== undefined) {
-        createdDomNode.__mevactKey = newVNode.key;
+    if(newVNode.__elementKey) {
+        createdDomNode.__elementKey = newVNode.__elementKey;
     }
 
     return createdDomNode;
 }
 
 export function unmount(vNodeToUnmount) {
-    vNodeToUnmount.__dom.remove();
+    if(vNodeToUnmount.__dom !== undefined) {
+        vNodeToUnmount.__dom.remove();
+        return true;
+    }
+    if(vNodeToUnmount.__componentInstance.__dom !== undefined) {
+        vNodeToUnmount.__componentInstance.__dom.remove();
+        return true;
+    }
+    return false;
 }
 
 export function setProperty(dom, key, value, oldValue) {

@@ -42,8 +42,13 @@ function initializeState (data) {
         },
         set: (object, objectKey, value) => {
             if(objectKey in object) {
+                const prevState = object[objectKey];
+                const nextState = value;
+
                 object[objectKey] = value;
                 diff(this.__currentVNode, this.render(), this.__parentDom);
+                
+                this.updated(prevState, nextState);
                 return true;
             } else {
                 return false;
