@@ -1,14 +1,17 @@
 import {render, unmount} from './../render.js';
 
 export function diff(oldVNode, newVNode, parentDom) {
+    const componentInstance = oldVNode.__componentInstance;
+
+    // newVNode.__componentInstance = oldVNode.__componentInstance;
     console.log('diffing', oldVNode,typeof oldVNode, newVNode, typeof newVNode, parentDom);
     // console.log('========================== is the data the same', oldVNode.data == newVNode.data);
 
     // oldVNode is a VNnode, new VNode is a simple text node, not VNode --  FULL RENDER
     if(typeof oldVNode === 'object' && typeof newVNode === 'string') {
         unmount(oldVNode);
-        if(oldVNode.__componentInstance !== undefined) {
-            oldVNode.__componentInstance.destroyed();
+        if(componentInstance !== undefined) {
+            componentInstance.destroyed();
         }
         return render(parentDom, newVNode , false/* shouldRenderChildren = false */);
     }
@@ -21,15 +24,34 @@ export function diff(oldVNode, newVNode, parentDom) {
         }
         
         if(typeof oldVNode.tag === 'function') {
-            diffChildren(oldVNode, newVNode, oldVNode.__componentInstance.__dom);
-        } else {
+            diffChildren(oldVNode, newVNode, componentInstance.__currentVNode.__dom);
+            
+            // oldVNode.__componentInstance.children = newVNode.children;
+            // oldVN
+            // oldVNode.__componentInstance.tag = newVNode.tag;
+            // oldVNode.__componentInstance.data = newVNode.data;
+            // oldVNode.__componentInstance.__currentVNode.children = newVNode.children;
+            // oldVNode.__componentInstance.__currentVNode.data = newVNode.data;
+            // oldVNode.__componentInstance.__currentVNode.tag = newVNode.tag;
 
+        } else {
             diffChildren(oldVNode, newVNode, oldVNode.__dom);
         }
     }
 
-    
+    if (componentInstance !== undefined) {
+        const oldDOM = componentInstance.__currentVNode.__dom;
+        componentInstance.__currentVNode = newVNode;
+        componentInstance.__currentVNode.__dom = oldDOM;
+        componentInstance.__currentVNode.__componentInstance = componentInstance;
+    }
 
+    // if(oldVNode === 'object' && typeof newVNode === 'object') {
+    //     if(typeof)
+    //     oldVNode.__componentInstance
+    //     oldVNode.children = newVNode.children;
+    //     oldVNode.data = newVNode.data;
+    // }
 
     // IF tag is typeof function, it means the VNode is a component, if the tag is in children, you have to call updated in child 
     // component, but only if the props changed.
@@ -66,13 +88,14 @@ export function diff(oldVNode, newVNode, parentDom) {
 }
 
 export function diffChildren(oldVNode, newVNode, parentDom) {
+    console.log('diffing children', oldVNode, newVNode, parentDom);
     const currentActiveElement = document.activeElement;
     const childrenPool = {};
     if(oldVNode.children.length > 0) {
         oldVNode.children.forEach((oldChild, __index) => {
             // children can be simple strings too so we check if its a object wich means its a VNode
             if(typeof oldChild === 'object') {
-                console.log('OLD CHILD =>>>>>>>>>>>>>>>>>', oldChild.__elementKey);
+                // console.log('OLD CHILD =>>>>>>>>>>>>>>>>>', oldChild.__elementKey);
                 if(oldChild.__elementKey !== null) {
                     childrenPool[oldChild.__elementKey] = oldChild;
                 } else {
@@ -108,7 +131,7 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
                             // this means the strings are not the same, so we have to update the DOM
                             // we do this by acessing the child at __index so we
                             const elementToRemove = parentDom.children[__index];
-                            console.log('777777777777777777777777777777777777777777777777777777/', elementToRemove, childrenPool[__index], newChild);
+                            // console.log('777777777777777777777777777777777777777777777777777777/', elementToRemove, childrenPool[__index], newChild);
                             elementToRemove.remove();
                         }
                         delete childrenPool[__index];
@@ -129,8 +152,9 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
         //     leftoverChild.__componentInstance.__dom.remove();
         //     leftoverChild.__componentInstance.destroyed();
         // } 
+        delete oldVNode[childrenPool.key]
         unmount(childrenPool[keyOfLeftChild]);
-    });
+    }); 
 }
 
 export function diffProperties(oldVDom,newVDom, dom) {
@@ -147,3 +171,5 @@ export function diffProperties(oldVDom,newVDom, dom) {
 
 }
 
+// updateComponentInstance(oldVNode, newVNode){
+// }

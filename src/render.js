@@ -38,8 +38,8 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
         // ====================================
         parentDom.appendChild(createdDomNode);
         // Component mounted hook here
-        newVNode.__dom = createdDomNode;
-        newVNode.__componentInstance.__dom = createdDomNode;
+        // newVNode.__dom = createdDomNode;
+        newVNode.__componentInstance.__currentVNode.__dom = createdDomNode;
         newVNode.__componentInstance.mounted();
 
 
@@ -47,9 +47,9 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
         if(Object.keys(newVNode.data.listeners).length !== 0) {
             for(let event in newVNode.data.listeners) {
                 newVNode.__componentInstance.__listeners[event] = newVNode.data.listeners[event];
-                console.log(' =============================', newVNode.__componentInstance.__listeners);
+                // console.log(' =============================', newVNode.__componentInstance.__listeners);
             }
-            console.log(' add listeners to dom node ------ if newVNode.data.listeners has a event with .native, add it here', createdDomNode, newVNode.data.listeners);
+            // console.log(' add listeners to dom node ------ if newVNode.data.listeners has a event with .native, add it here', createdDomNode, newVNode.data.listeners);
         }
 
         //setting propery to newly rendered domNode
@@ -66,7 +66,7 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
         }
     }
     else if(typeof newVNode.tag === 'string') {
-        console.log(' newVNode is not a class but a string', newVNode);
+        // console.log(' newVNode is not a class but a string', newVNode);
         createdDomNode = document.createElement(newVNode.tag);
         parentDom.appendChild(createdDomNode);
         newVNode.__dom = createdDomNode;
@@ -88,7 +88,7 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
         }
     } else if(typeof newVNode === 'string'){
         createdDomNode = document.createTextNode(newVNode);
-        console.log(' ============ append child for string >>>>>>>>>>>>>>>>>>>>', parentDom);
+        // console.log(' ============ append child for string >>>>>>>>>>>>>>>>>>>>', parentDom);
         parentDom.appendChild(createdDomNode);
         //setting propery to newly rendered domNode
         for(let prop in newVNode.data) {
