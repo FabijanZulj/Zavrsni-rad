@@ -3,10 +3,6 @@ import {render, unmount} from './../render.js';
 export function diff(oldVNode, newVNode, parentDom) {
     const componentInstance = oldVNode.__componentInstance;
 
-    // newVNode.__componentInstance = oldVNode.__componentInstance;
-    console.log('diffing', oldVNode,typeof oldVNode, newVNode, typeof newVNode, parentDom);
-    // console.log('========================== is the data the same', oldVNode.data == newVNode.data);
-
     // oldVNode is a VNnode, new VNode is a simple text node, not VNode --  FULL RENDER
     if(typeof oldVNode === 'object' && typeof newVNode === 'string') {
         unmount(oldVNode);
@@ -25,15 +21,6 @@ export function diff(oldVNode, newVNode, parentDom) {
         
         if(typeof oldVNode.tag === 'function') {
             diffChildren(oldVNode, newVNode, componentInstance.__currentVNode.__dom);
-            
-            // oldVNode.__componentInstance.children = newVNode.children;
-            // oldVN
-            // oldVNode.__componentInstance.tag = newVNode.tag;
-            // oldVNode.__componentInstance.data = newVNode.data;
-            // oldVNode.__componentInstance.__currentVNode.children = newVNode.children;
-            // oldVNode.__componentInstance.__currentVNode.data = newVNode.data;
-            // oldVNode.__componentInstance.__currentVNode.tag = newVNode.tag;
-
         } else {
             diffChildren(oldVNode, newVNode, oldVNode.__dom);
         }
@@ -45,13 +32,6 @@ export function diff(oldVNode, newVNode, parentDom) {
         componentInstance.__currentVNode.__dom = oldDOM;
         componentInstance.__currentVNode.__componentInstance = componentInstance;
     }
-
-    // if(oldVNode === 'object' && typeof newVNode === 'object') {
-    //     if(typeof)
-    //     oldVNode.__componentInstance
-    //     oldVNode.children = newVNode.children;
-    //     oldVNode.data = newVNode.data;
-    // }
 
     // IF tag is typeof function, it means the VNode is a component, if the tag is in children, you have to call updated in child 
     // component, but only if the props changed.
@@ -88,7 +68,6 @@ export function diff(oldVNode, newVNode, parentDom) {
 }
 
 export function diffChildren(oldVNode, newVNode, parentDom) {
-    console.log('diffing children', oldVNode, newVNode, parentDom);
     const currentActiveElement = document.activeElement;
     const childrenPool = {};
     if(oldVNode.children.length > 0) {
@@ -111,6 +90,7 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
             if(typeof newChild === 'object') {
                 if(newChild.__elementKey !== null) {
                     if(childrenPool.hasOwnProperty(newChild.__elementKey)){
+                        newChild.__dom = childrenPool[newChild.__elementKey].__dom;
                         diff(childrenPool[newChild.__elementKey], newChild, parentDom);
                         delete childrenPool[newChild.__elementKey];
                     } else{
@@ -118,6 +98,7 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
                     }
                 } else {
                     if(childrenPool.hasOwnProperty(__index)) {
+                        newChild.__dom = childrenPool[__index].__dom;
                         diff(childrenPool[__index], newChild, parentDom);
                         delete childrenPool[__index];
                     } else {
@@ -126,13 +107,9 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
                 }
             } else {
                 if(childrenPool.hasOwnProperty(__index)) {
-                    if(typeof childrenPool[__index] === 'string' && typeof newChild === 'string') {
+                    if(typeof childrenPool[__index] !== 'object' && typeof newChild !== 'object') {
                         if(childrenPool[__index] !== newChild) {
-                            // this means the strings are not the same, so we have to update the DOM
-                            // we do this by acessing the child at __index so we
-                            const elementToRemove = parentDom.children[__index];
-                            // console.log('777777777777777777777777777777777777777777777777777777/', elementToRemove, childrenPool[__index], newChild);
-                            elementToRemove.remove();
+                            parentDom.childNodes[__index].nodeValue = newChild;
                         }
                         delete childrenPool[__index];
                     } else {
@@ -146,15 +123,8 @@ export function diffChildren(oldVNode, newVNode, parentDom) {
         });
     }
     Object.keys(childrenPool).forEach(keyOfLeftChild => {
-        // if(leftoverChild.__dom !== undefined) {
-        //     leftoverChild.__dom.remove();
-        // } else if(typeof leftoverChild.tag === 'function') {
-        //     leftoverChild.__componentInstance.__dom.remove();
-        //     leftoverChild.__componentInstance.destroyed();
-        // } 
-        delete oldVNode[childrenPool.key]
         unmount(childrenPool[keyOfLeftChild]);
-    }); 
+    });
 }
 
 export function diffProperties(oldVDom,newVDom, dom) {
