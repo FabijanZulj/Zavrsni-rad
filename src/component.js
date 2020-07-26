@@ -46,7 +46,7 @@ function initializeState (data) {
                 const nextState = value;
 
                 object[objectKey] = value;
-                diff(this.__currentVNode, this.render(), this.__parentDom);
+                this.__currentVNode = diff(this.__currentVNode, this.render(), this.__parentDom);
                 
                 this.updated(prevState, nextState);
                 return true;

@@ -83,20 +83,44 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
 
         if(newVNode.children.length && shouldRenderChildren === true) {
             for(let child in newVNode.children) {
-                render(createdDomNode, newVNode.children[child]);
+                if(typeof newVNode.children[child] !== 'object' || newVNode.children[child].isTextNode) {
+                    console.log('======================= IS TEXT NODE,' ,newVNode.children[child]);
+                    let domTextNode;
+                    if(newVNode.children[child].isTextNode) {
+                        domTextNode = render(createdDomNode, newVNode.children[child].textData);
+                    } else {
+                        domTextNode = render(createdDomNode, newVNode.children[child]);
+                        newVNode.children[child] = convertTextToVNode(newVNode.children[child].toString());
+                        newVNode.children[child].__dom = domTextNode;
+                    }
+                } else {
+                    render(createdDomNode, newVNode.children[child]);
+                }
             }
         }
-    } else if(typeof newVNode === 'string'){
+    } else if (typeof newVNode === 'string') {
         createdDomNode = document.createTextNode(newVNode);
-        // console.log(' ============ append child for string >>>>>>>>>>>>>>>>>>>>', parentDom);
         parentDom.appendChild(createdDomNode);
-        //setting propery to newly rendered domNode
-        for(let prop in newVNode.data) {
-            setProperty(createdDomNode,prop,newVNode.data[prop]);
-        }
+    }
+    // else if(typeof newVNode !== 'object' || newVNode.isTextNode){
+    //     if(newVNode.isTextNode) {
+    //         createdDomNode = document.createTextNode(newVNode.textData);
+    //         newVNode.domTextNode = createdDomNode;
+    //     } else{
+    //         createdDomNode = document.createTextNode(newVNode);
+    //     }
+    //     console.log('CREATED TEXT NODE', createdDomNode);
+    //     // console.log(' ============ append child for string >>>>>>>>>>>>>>>>>>>>', parentDom);
+    //     parentDom.appendChild(createdDomNode);
+    //     //setting propery to newly rendered domNode
+    //     for(let prop in newVNode.data) {
+    //         setProperty(createdDomNode,prop,newVNode.data[prop]);
+    //     }
 
-    } else {
+    // } 
+    else {
         // other primitive type, to string it and render it.
+        console.log('// other primitive type, to string it and render it.', newVNode);
         return render(parentDom,newVNode.toString());
     }
     if(newVNode.__elementKey) {
@@ -106,17 +130,39 @@ export function render(parentDom, newVNode, shouldRenderChildren = true) {
 
     return createdDomNode;
 }
+export function convertTextToVNode(textNode) {
+    return {
+        data: {
+            listeners:{},
+        },
+        textData: textNode,
+        isTextNode: true,
+        __dom: null,
+    }
+}
 
-export function unmount(vNodeToUnmount) {
+export function unmountVNode(vNodeToUnmount) {
+    if(vNodeToUnmount.textData === false || vNodeToUnmount === 'false') return;
+
+    console.log('UNMOUNT CALLED WITH ', vNodeToUnmount, this);
+    if(vNodeToUnmount.isTextNode) {
+        vNodeToUnmount.__dom.remove();
+        return true;
+    }
     if(vNodeToUnmount.__dom !== undefined) {
         vNodeToUnmount.__dom.remove();
         return true;
     }
     if(vNodeToUnmount.__componentInstance.__dom !== undefined) {
         vNodeToUnmount.__componentInstance.__dom.remove();
+        vNodeToUnmount.__componentInstance.destroyed();
         return true;
     }
     return false;
+}
+
+export function unmount(domNode) {
+    domNode.remove();
 }
 
 export function setProperty(dom, key, value, oldValue) {
